@@ -1232,7 +1232,8 @@
 3.26. ADD_ONION
 
   The syntax is:
-    "ADD_ONION" SP KeyType ":" KeyBlob [SP "DiscardPK"]
+    "ADD_ONION" SP KeyType ":" KeyBlob
+            [SP "Flags=" Flag *("," Flag)]
             1*(SP "Port=" VirtPort ["," Target]) CRLF
 
     KeyType =
@@ -1246,6 +1247,10 @@
      "RSA1024" / ; The server should generate a 1024 bit RSA key
                    (KeyType == "NEW")
      String      ; A serialized private key (without whitespace)
+
+    Flag =
+     "DiscardPK" ; The server should not include the newly generated
+                   private key as part of the response.
 
     VirtPort = The virtual TCP Port for the Onion Service (As in the
                HiddenServicePort "VIRTPORT" argument).
@@ -1268,8 +1273,8 @@
   semantics to the corresponding HiddenServicePort configuration values.
 
   The server response will only include a private key if the server was
-  requested to generate a new keypair, and also the "DiscardPK" argument
-  was not specified. (Note that if "DiscardPK" is specified, there is no
+  requested to generate a new keypair, and also the "DiscardPK" flag was
+  not specified. (Note that if "DiscardPK" flag is specified, there is no
   way to recreate the generated keypair and the corresponding Onion
   Service at a later date).
 
@@ -1286,7 +1291,7 @@
   RSAPrivateKey, with all newlines removed.)
 
   Examples:
-     C: ADD_ONION NEW:BEST DiscardPK Port=80
+     C: ADD_ONION NEW:BEST Flags=DiscardPK Port=80
      S: 250-ServiceID=exampleonion1234
      S: 250 OK
 
