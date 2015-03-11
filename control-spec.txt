@@ -1229,6 +1229,101 @@
 
   [DROPGUARDS was added in Tor 0.2.5.2-alpha.]
 
+3.26. ADD_ONION
+
+  The syntax is:
+    "ADD_ONION" SP KeyType ":" KeyBlob [SP "DiscardPK"]
+            SP 1*("Port=" VirtPort ("," Target)) CRLF
+
+    KeyType =
+     "NEW"     / ; The server should generate a key of algorithm KeyBlob
+     "RSA1024"   ; The server should use the 1024 bit RSA key provided
+                   in as KeyBlob
+
+    KeyBlob =
+     "BEST"    / ; The server should generate a key using the "best"
+                   supported algorithm (KeyType == "NEW")
+     "RSA1024" / ; The server should generate a 1024 bit RSA key
+                   (KeyType == "NEW")
+     String      ; A serialized private key
+
+    VirtPort = The virtual TCP Port for the Onion Service (As in the
+               HiddenServicePort "VIRTPORT" argument).
+
+    Target = The (optional) target for the given VirtPort (As in the
+             optiona HiddenServicePort "TARGET" argument).
+
+  The server reply format is:
+    "250-ServiceID=" ServiceID CRLF
+    ["250-PrivateKey=" KeyType ":" KeyBlob CRLF]
+    "250 OK" CRLF
+
+    ServiceID = The Onion Service address without the trailing ".onion"
+                suffix
+
+  Tells the server to create a new Onion ("Hidden") Service, with the
+  specified private key and algorithm.  If a KeyType of "NEW" is selected,
+  the server will generate a new keypair using the selected algorithm.
+  The "Port" argument's VirtPort and Target values have identical
+  semantics to the corresponding HiddenServicePort configuration values.
+
+  The server response will only include private key if the server was
+  requested to generate a new keypair, and the "DiscardPK" argument was
+  not specified. (Note that if "DiscardPK" is specifed, there is no way
+  to recreate the generated keypair and the corresponding Onion Service
+  at a later date).
+
+  Once created the new Onion Service will remain active until either the
+  control connection that origniated the "ADD_ONION" command is called,
+  the Onion Service is removed via "DEL_ONION", or the server terminates.
+
+  It is the Onion Service server application's responsibility to close
+  existing client connections if desired after the Onion Service is
+  removed.
+
+  (The KeyBlob format is left intentionally opaque, however for "RSA1024"
+  keys it is currently the Base64 encoded DER representation of a PKCS#1
+  RSAPrivateKey, with all newlines removed.)
+
+  Examples:
+     C: ADD_ONION NEW:BEST DiscardPK Port=80
+     S: 250-ServiceID=exampleonion1234
+     S: 250 OK
+
+     C: ADD_ONION RSA1024:[Blob Redacted] Port=80,192.168.1.1:8080
+     S: 250-ServiceID=sampleonion12456
+     S: 250 OK
+
+     C: ADD_ONION NEW:BEST Port=22 Port=80,8080
+     S: 250-ServiceID=testonion1234567
+     S: 250-PrivateKey=RSA1024:[Blob Redacted]
+     S: 250 OK
+
+  [ADD_ONION was added in Tor 0.2.7.0-alpha.]
+
+3.27. DEL_ONION
+
+  The syntax is:
+    "DEL_ONION" SP ServiceID CRLF
+
+    ServiceID = The Onion Service address without the trailing ".onion"
+                suffix
+
+  Tells the server to remove an Onion ("Hidden") Service, that was
+  previously created via an "ADD_ONION" command on the same control port
+  connection.  If the control port connection is different from that by
+  which the Onion Service was created, the server will disavow all
+  knowledge and return a 552.
+
+  It is the Onion Service server application's responsibility to close
+  existing client connections if desired after the Onion Service has been
+  removed via "DEL_ONION".
+
+  Tor replies with "250 OK" on success, or a 512 if there are an invalid
+  number of arguments, or a 552 if it doesn't recognize the ServiceID.
+
+  [DEL_ONION was added in Tor 0.2.7.0-alpha.]
+
 4. Replies
 
   Reply codes follow the same 3-character format as used by SMTP, with the
