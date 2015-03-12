@@ -1249,8 +1249,10 @@
      String      ; A serialized private key (without whitespace)
 
     Flag =
-     "DiscardPK" ; The server should not include the newly generated
-                   private key as part of the response.
+     "DiscardPK" / ; The server should not include the newly generated
+                     private key as part of the response.
+     "Detach"      ; Do not associate the newly created Onion Service
+                     to the current control connection.
 
     VirtPort = The virtual TCP Port for the Onion Service (As in the
                HiddenServicePort "VIRTPORT" argument).
@@ -1279,8 +1281,10 @@
   Service at a later date).
 
   Once created the new Onion Service will remain active until either the
-  control connection that originated the "ADD_ONION" command is closed,
-  the Onion Service is removed via "DEL_ONION", or the server terminates.
+  Onion Service is removed via "DEL_ONION", the server terminates, or the
+  control connection that originated the "ADD_ONION" command is closed.
+  It is possible to override disabling the Onion Service on control
+  connection close by specifying the "Detach" flag.
 
   It is the Onion Service server application's responsibility to close
   existing client connections if desired after the Onion Service is
@@ -1315,10 +1319,13 @@
                 suffix
 
   Tells the server to remove an Onion ("Hidden") Service, that was
-  previously created via an "ADD_ONION" command on the same control port
-  connection.  If the control port connection is different from that by
-  which the Onion Service was created, the server will disavow all
-  knowledge and return a 552.
+  previously created via an "ADD_ONION" command.  It is only possible to
+  remove Onion Services that were created on the same control connection
+  as the "DEL_ONION" command, and those that belong to no control
+  connection in particular (The "Detach" flag was specified on creation).
+
+  If the ServiceID is invalid, or is neither owned by the current control
+  connection nor a detached Onion Service, the server will return a 552.
 
   It is the Onion Service server application's responsibility to close
   existing client connections if desired after the Onion Service has been
