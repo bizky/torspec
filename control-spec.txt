@@ -831,6 +831,17 @@
       the current (valid, accepted) consensus that Tor has.
       [New in Tor 0.2.6.3-alpha]
 
+     "onions/current"
+     "onions/detached"
+      A newline-separated list of the Onion ("Hidden") Services created
+      via the "ADD_ONION" command. The 'current' key returns Onion Services
+      belonging to the current control connection. The 'detached' key
+      returns Onion Services detached from the parent control connection
+      (as in, belonging to no control connection).
+      The format of each line is:
+         HSAddress
+      [New in Tor 0.2.7.1-alpha.]
+
   Examples:
      C: GETINFO version desc/name/moria1
      S: 250+desc/name/moria=
@@ -1335,30 +1346,6 @@
   number of arguments, or a 552 if it doesn't recognize the ServiceID.
 
   [DEL_ONION was added in Tor 0.2.7.1-alpha.]
-
-3.27. GET_ONIONS
-
-  The syntax is:
-    "GET_ONIONS" CRLF
-
-  The server reply format is:
-    *["250-ServiceID=" ServiceID [SP "Flags=" Flag *("," Flag)] CRLF]
-    "250 OK" CRLF
-
-    ServiceID = The Onion Service address without the trailing ".onion"
-                suffix
-
-    Flag =
-     "Detach"  ; The Onion Service is not associated with any control
-                 connection.
-
-  Tells the server to return a list of all Onion ("Hidden") Services that
-  were created via "ADD_ONION" that are currently active.  The server will
-  only return Onion Services belonging to the current control connection,
-  and those that belong to no control connection in particular (The
-  "Detach" flag was specified at creation).
-
-  [GET_ONIONS was added in Tor 0.2.7.1-alpha.]
 
 4. Replies
 
