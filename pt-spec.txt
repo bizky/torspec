@@ -24,6 +24,7 @@ A Table of Contents:
   2.2.1.0. Client PT behaviour (CMETHOD lines)
   2.2.1.1. Server PT behaviour (SMETHOD lines)
   2.2.2. Managed proxy protocol behaviour
+  2.3. Extended ORPort
 
                                                              +---- Extended ORPort
                                                              |        connection
@@ -276,12 +277,22 @@ connection  |     +-----------+    ^       +------------+    |
       Example: TOR_PT_STATE_LOCATION=/var/lib/tor/pt_state/
 
       "TOR_PT_MANAGED_TRANSPORT_VER" -- Used to tell the proxy which
-       versions of this configuration protocol Tor supports. Clients
+       versions of this configuration protocol Tor supports. Proxies
        MUST accept comma-separated lists containing any version that
        they recognise, and MUST work correctly even if some of the
        versions they do not recognise are non-numeric. Valid version
        characters are non-space, non-comma printable ASCII characters.
       Example: TOR_PT_MANAGED_TRANSPORT_VER=1,1a,2,4B
+
+      "TOR_PT_EXIT_ON_STDIN_CLOSE" -- Used to tell the proxy that Tor
+       will configure the proxy's stdin to be in a readable state when
+       launching the process, so that the proxy may use stdin getting
+       closed as a reliable way to detect that it should shutdown. Tor
+       MUST NOT write to the proxy's stdin regardless of setting the
+       enviornment variable. Proxies MUST NOT make decisions based on
+       the state of stdin unless this enviornment variable is set to
+       "1".
+      Example: TOR_PT_EXIT_ON_STDIN_CLOSE=1
 
     {Client only}
 
@@ -457,7 +468,7 @@ connection  |     +-----------+    ^       +------------+    |
 2.2.2. Managed proxy protocol behaviour
 
   This section specifies some behaviours that Tor and PTs SHOULD abide
-  too while performing the managed proxy protocol:
+  to while performing the managed proxy protocol:
 
   SMETHOD and CMETHOD lines may be interspersed, to allow the proxies to
   report methods as they become available, even when some methods may
@@ -477,6 +488,20 @@ connection  |     +-----------+    ^       +------------+    |
   So, for example, if tor supports this configuration protocol it
   should set the environment variable:
     TOR_PT_MANAGED_TRANSPORT_VER=1
+
+  Tor SHOULD properly configure the PT's stdin, and use it as a portable
+  way to indicate that the PT should terminate by setting the
+  TOR_PT_EXIT_ON_STDIN_CLOSE enviornment variable:
+    TOR_PT_EXIT_ON_STDIN_CLOSE=1
+
+  PTs that recognise TOR_PT_EXIT_ON_STDIN_CLOSE SHOULD detect when stdin
+  gets closed by the parent process, and respond by closing their listener
+  ports, closing all existing connections, running other cleanup as
+  required, and terminating.
+
+  PTs SHOULD respond to a single TERM signal by closing their listener
+  ports, closing all existing connections, running other cleanup as
+  required, and terminating.
 
 2.3. Extended ORPort [EXTORPORT]
 
